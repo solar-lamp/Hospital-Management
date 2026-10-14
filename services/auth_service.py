@@ -7,7 +7,6 @@ the browser build (Pyodide), where those C extensions are not guaranteed.
 """
 
 import base64
-import hashlib
 import hmac
 import secrets
 
@@ -20,6 +19,27 @@ from utils.permissions import ROLES, require
 
 ALGORITHM = "pbkdf2_sha256"
 
+try:
+    from hashlib import pbkdf2_hmac
+except ImportError:  # Pyodide imports hashlib before its OpenSSL module is loaded
+    try:
+        from _hashlib import pbkdf2_hmac
+    except ImportError:
+        def pbkdf2_hmac(name, password, salt, iterations):
+            """RFC 8018 PBKDF2 with HMAC; single block (dklen == digest size)."""
+            mac = hmac.new(password, digestmod=name)
+            u = _prf(mac, salt + b"\x00\x00\x00\x01")
+            result = int.from_bytes(u, "big")
+            for _ in range(iterations - 1):
+                u = _prf(mac, u)
+                result ^= int.from_bytes(u, "big")
+            return result.to_bytes(len(u), "big")
+
+        def _prf(mac, data):
+            m = mac.copy()
+            m.update(data)
+            return m.digest()
+
 
 class AuthError(Exception):
     """Invalid credentials or inactive account."""
@@ -28,7 +48,7 @@ class AuthError(Exception):
 def hash_password(password: str, iterations: int | None = None) -> str:
     iterations = iterations or config.pbkdf2_iterations()
     salt = secrets.token_bytes(16)
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt, iterations)
+    digest = pbkdf2_hmac("sha256", password.encode(), salt, iterations)
     return "$".join([ALGORITHM, str(iterations), base64.b64encode(salt).decode(),
                      base64.b64encode(digest).decode()])
 
@@ -39,7 +59,7 @@ def verify_password(password: str, stored: str) -> bool:
         if algorithm != ALGORITHM:
             return False
         expected = base64.b64decode(digest)
-        actual = hashlib.pbkdf2_hmac("sha256", password.encode(), base64.b64decode(salt),
+        actual = pbkdf2_hmac("sha256", password.encode(), base64.b64decode(salt),
                                      int(iterations))
     except (ValueError, TypeError):
         return False
