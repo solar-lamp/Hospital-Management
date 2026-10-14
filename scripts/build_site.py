@@ -25,7 +25,7 @@ REQUIREMENTS = ["plotly==7.1.0", "openpyxl==3.1.5"]
 PREBUILT = ["sqlite3", "hashlib"]
 
 ENV = {
-    "HMS_DB_PATH": "/mnt/meditrack/hospital.db",   # IndexedDB-backed mount point
+    "HMS_DB_PATH": "/meditrack/hospital.db",   # IndexedDB-backed mount point
     "HMS_DEMO_MODE": "1",
     "HMS_AUTO_SEED_DEMO": "1",
     # WebAssembly hashing is slower than native; still a strong salted KDF.
@@ -65,7 +65,7 @@ INDEX = """<!doctype html>
       files: Object.fromEntries(files.map((f) => [f, { url: "./app/" + f }])),
       requirements: __REQUIREMENTS__,
       prebuiltPackageNames: __PREBUILT__,
-      idbfsMountpoints: ["/mnt/meditrack"],
+      idbfsMountpoints: ["/meditrack"],
       env: __ENV__,
       streamlitConfig: {
         "client.toolbarMode": "minimal",

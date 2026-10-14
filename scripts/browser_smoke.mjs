@@ -10,7 +10,7 @@ const browser = await chromium.launch(
 const page = await browser.newPage({ viewport: { width: 1400, height: 1000 } });
 const problems = [];
 page.on("pageerror", (e) => problems.push(`pageerror: ${e.message}`));
-page.on("console", (m) => { if (m.type() === "error") console.log("console error:", m.text()); });
+page.on("console", (m) => { if (["error", "warning"].includes(m.type())) console.log(`console ${m.type()}:`, m.text()); });
 
 const shot = (name) => page.screenshot({ path: `${outDir}/${name}.png`, fullPage: true });
 const login = async () => {
@@ -28,8 +28,13 @@ const exceptions = async (where) => {
 
 console.time("first load + seed + login");
 await page.goto(url);
-await shot("01_login");
-await login();
+try {
+  await login();
+} catch (err) {
+  await shot("01_failed");
+  console.error("Page text at failure:\n" + (await page.locator("body").innerText()).slice(0, 3000));
+  throw err;
+}
 console.timeEnd("first load + seed + login");
 await page.waitForTimeout(3000);
 await shot("02_dashboard");
