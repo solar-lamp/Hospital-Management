@@ -1,0 +1,12 @@
+[client]
+toolbarMode = "minimal"
+
+[server]
+runOnSave = false
+maxUploadSize = 50
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+primaryColor = "#2a78d6"

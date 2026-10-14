@@ -1,0 +1,7 @@
+# Versions match the in-browser (stlite 1.9.2 / Pyodide 0.29.3) build so the
+# local app and the GitHub Pages app behave the same.
+streamlit==1.62.0
+pandas==2.3.3
+plotly==7.1.0
+openpyxl==3.1.5
+pytest==9.1.1
